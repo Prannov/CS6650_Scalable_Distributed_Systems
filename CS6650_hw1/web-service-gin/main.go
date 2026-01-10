@@ -24,8 +24,10 @@ var albums = []album{
 func main() {
         router := gin.Default()
         router.GET("/albums", getAlbums)
-		router.GET("/albums/:id", getAlbumByID)
+	router.GET("/albums/:id", getAlbumByID)
         router.POST("/albums", postAlbums)
+        router.PUT("/albums/:id", putAlbumByID)
+	router.DELETE("/albums/:id", deleteAlbumByID)
 
         router.Run("localhost:8080")
 }
@@ -64,4 +66,44 @@ func getAlbumByID(c *gin.Context) {
                 }
         }
         c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+}
+
+// putAlbumByID updates the album whose ID matches the path param.
+// It replaces the fields with what you send in the body (except ID).
+func putAlbumByID(c *gin.Context) {
+	id := c.Param("id")
+
+	var updated album
+	if err := c.BindJSON(&updated); err != nil {
+		return
+	}
+
+	// Enforce path ID as source of truth (don't let body override it).
+	updated.ID = id
+
+	for i, a := range albums {
+		if a.ID == id {
+			albums[i] = updated
+			c.IndentedJSON(http.StatusOK, updated)
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+}
+
+// deleteAlbumByID deletes the album whose ID matches the path param.
+func deleteAlbumByID(c *gin.Context) {
+	id := c.Param("id")
+
+	for i, a := range albums {
+		if a.ID == id {
+			// remove element i
+			albums = append(albums[:i], albums[i+1:]...)
+			c.Status(http.StatusNoContent)
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
 }
