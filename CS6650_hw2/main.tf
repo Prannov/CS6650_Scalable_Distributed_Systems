@@ -46,7 +46,7 @@ data "aws_instance" "existing" {
 
 resource "aws_instance" "demo-instance" {
   ami                  = data.aws_ami.al2023.id
-  instance_type        = "t2.micro"
+  instance_type        = "t3.micro"
   iam_instance_profile = "LabInstanceProfile"
   key_name             = var.ssh_key_name
 
