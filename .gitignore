@@ -1,0 +1,56 @@
+############################################
+# Terraform
+############################################
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Never commit real tfvars (often contains creds/ids)
+*.tfvars
+*.tfvars.json
+
+# Local terraform config files
+.terraformrc
+terraform.rc
+
+# Optional override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+############################################
+# Secrets / keys
+############################################
+*.pem
+*.key
+*.p12
+*.pfx
+
+############################################
+# Archives / large files
+############################################
+*.zip
+
+############################################
+# OS / Editor junk
+############################################
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+############################################
+# Go build artifacts
+############################################
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
+*.test
+bin/
+dist/
