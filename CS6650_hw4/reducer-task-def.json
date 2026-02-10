@@ -1,0 +1,32 @@
+{
+  "family": "mapreduce-reducer",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::757840225451:role/LabRole",
+  "executionRoleArn": "arn:aws:iam::757840225451:role/LabRole",
+  "containerDefinitions": [
+    {
+      "name": "reducer-container",
+      "image": "757840225451.dkr.ecr.us-east-1.amazonaws.com/mapreduce-reducer:latest",
+      "command": ["python", "reducer.py"],
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mapreduce-reducer",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
