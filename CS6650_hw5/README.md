@@ -237,12 +237,12 @@ Open browser to `http://localhost:8089`
 
 ### Load Test Results
 
-![Locust testing - 1](/Users/prannovjamadagni/CS6650_Scalable_Distributed_Systems/CS6650_hw5/pictures/locust_test_1.png)
-![Locust testing - 1](/Users/prannovjamadagni/CS6650_Scalable_Distributed_Systems/CS6650_hw5/pictures/locust_test_2.png)
-![Locust testing - 1](/Users/prannovjamadagni/CS6650_Scalable_Distributed_Systems/CS6650_hw5/pictures/locust_test_3.png)
-![Status Codes](/Users/prannovjamadagni/CS6650_Scalable_Distributed_Systems/CS6650_hw5/pictures/status_codes.png)
-![Curl testing - 1](/Users/prannovjamadagni/CS6650_Scalable_Distributed_Systems/CS6650_hw5/pictures/curl_testing.png)
-![Curl testing - 2](/Users/prannovjamadagni/CS6650_Scalable_Distributed_Systems/CS6650_hw5/pictures/curl_testing_2.png)
+![Locust testing - 1](/CS6650_hw5/pictures/locust_test_1.png)
+![Locust testing - 1](/CS6650_hw5/pictures/locust_test_2.png)
+![Locust testing - 1](/CS6650_hw5/pictures/locust_test_3.png)
+![Status Codes](/CS6650_hw5/pictures/status_codes.png)
+![Curl testing - 1](/CS6650_hw5/pictures/curl_testing.png)
+![Curl testing - 2](/CS6650_hw5/pictures/curl_testing_2.png)
 
 **Observations:**
 - GET requests (read operations) had ~33ms average response time with median of 32-34ms
