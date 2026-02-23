@@ -1,0 +1,25 @@
+# Go
+server
+*.exe
+*.out
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform.tfstate.lock.info
+
+# Sensitive
+terraform/terraform.tfvars
+
+# Locust results
+results/
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Mac
+.DS_Store
