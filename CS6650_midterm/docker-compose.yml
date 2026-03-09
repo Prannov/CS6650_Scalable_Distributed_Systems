@@ -1,0 +1,14 @@
+services:
+  search-svc:
+    build: ./search-svc
+    ports:
+      - "8080:8080"
+    environment:
+      - INVENTORY_URL=http://inventory-svc:8081
+    depends_on:
+      - inventory-svc
+
+  inventory-svc:
+    build: ./inventory-svc
+    ports:
+      - "8081:8081"
