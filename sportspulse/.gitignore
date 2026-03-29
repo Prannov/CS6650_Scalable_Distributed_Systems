@@ -1,0 +1,10 @@
+# Go binaries
+event-svc/event-svc
+stats-worker/stats-worker
+query-svc/query-svc
+
+# Environment
+.env
+
+# Mac
+.DS_Store
