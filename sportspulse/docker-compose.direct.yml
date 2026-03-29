@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sportspulse
+      POSTGRES_USER: sp_user
+      POSTGRES_PASSWORD: sp_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_direct_data:/var/lib/postgresql/data
+      - ./infra/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sp_user -d sportspulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  event-svc:
+    build:
+      context: ./event-svc-direct
+      dockerfile: Dockerfile.direct
+    ports:
+      - "8083:8080"
+    environment:
+      - DB_URL=postgres://sp_user:sp_pass@postgres:5432/sportspulse?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pg_direct_data:
