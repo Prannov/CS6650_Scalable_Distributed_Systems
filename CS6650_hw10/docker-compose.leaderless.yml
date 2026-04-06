@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  node1:
+    build:
+      context: .
+      dockerfile: leaderless/Dockerfile
+    environment:
+      SELF: "http://node1:8080"
+      ADDR: ":8080"
+      PEERS: >-
+        http://node2:8080,
+        http://node3:8080,
+        http://node4:8080,
+        http://node5:8080
+    ports:
+      - "8080:8080"
+    networks:
+      - kvnet
+
+  node2:
+    build:
+      context: .
+      dockerfile: leaderless/Dockerfile
+    environment:
+      SELF: "http://node2:8080"
+      ADDR: ":8080"
+      PEERS: >-
+        http://node1:8080,
+        http://node3:8080,
+        http://node4:8080,
+        http://node5:8080
+    ports:
+      - "8081:8080"
+    networks:
+      - kvnet
+
+  node3:
+    build:
+      context: .
+      dockerfile: leaderless/Dockerfile
+    environment:
+      SELF: "http://node3:8080"
+      ADDR: ":8080"
+      PEERS: >-
+        http://node1:8080,
+        http://node2:8080,
+        http://node4:8080,
+        http://node5:8080
+    ports:
+      - "8082:8080"
+    networks:
+      - kvnet
+
+  node4:
+    build:
+      context: .
+      dockerfile: leaderless/Dockerfile
+    environment:
+      SELF: "http://node4:8080"
+      ADDR: ":8080"
+      PEERS: >-
+        http://node1:8080,
+        http://node2:8080,
+        http://node3:8080,
+        http://node5:8080
+    ports:
+      - "8083:8080"
+    networks:
+      - kvnet
+
+  node5:
+    build:
+      context: .
+      dockerfile: leaderless/Dockerfile
+    environment:
+      SELF: "http://node5:8080"
+      ADDR: ":8080"
+      PEERS: >-
+        http://node1:8080,
+        http://node2:8080,
+        http://node3:8080,
+        http://node4:8080
+    ports:
+      - "8084:8080"
+    networks:
+      - kvnet
+
+networks:
+  kvnet:
+    driver: bridge
