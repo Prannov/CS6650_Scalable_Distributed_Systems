@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: album
+      POSTGRES_PASSWORD: album
+      POSTGRES_DB: albumstore
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U album"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # LocalStack gives us SQS + S3 locally
+  localstack:
+      image: localstack/localstack:3
+      ports:
+        - "4566:4566"
+      environment:
+        SERVICES: s3,sqs
+        DEFAULT_REGION: us-east-1
+        SQS_ENDPOINT_STRATEGY: off
+        AWS_DEFAULT_REGION: us-east-1
+      volumes:
+        - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh:ro
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://album:album@postgres:5432/albumstore?sslmode=disable
+      REDIS_ADDR: redis:6379
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/photo-queue
+      S3_BUCKET: album-photos
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_ENDPOINT_URL: http://localstack:4566
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      DATABASE_URL: postgres://album:album@postgres:5432/albumstore?sslmode=disable
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/photo-queue
+      S3_BUCKET: album-photos
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_ENDPOINT_URL: http://localstack:4566
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started

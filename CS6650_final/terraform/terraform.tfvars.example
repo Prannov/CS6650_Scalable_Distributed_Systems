@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars and fill in your values
+# terraform apply -var-file=terraform.tfvars
+
+aws_region   = "us-east-1"
+app_name     = "album-store"
+db_password  = "changeme_strong_password"
+
+# Set these AFTER first `terraform apply` creates the ECR repos
+# (terraform output ecr_api_url / ecr_worker_url)
+api_image    = "123456789.dkr.ecr.us-east-1.amazonaws.com/album-store-api:latest"
+worker_image = "123456789.dkr.ecr.us-east-1.amazonaws.com/album-store-worker:latest"
+
+# Scale up for load tests
+api_count    = 2
+worker_count = 2
+api_cpu      = 1024   # 1 vCPU
+api_memory   = 2048   # MB
+worker_cpu   = 512
+worker_memory = 1024
