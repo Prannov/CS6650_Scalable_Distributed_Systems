@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SportsPulse</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ───────────────────────────────────── */
+    nav {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      height: 56px;
+    }
+    .nav-brand {
+      font-size: 18px;
+      font-weight: 800;
+      color: #818cf8;
+      letter-spacing: -0.5px;
+    }
+    .nav-brand span { color: white; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { background: #334155; color: white; }
+    .nav-tab.active { background: #4f46e5; color: white; }
+    .live-dot {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #22c55e;
+    }
+    .live-dot::before {
+      content: '';
+      width: 8px; height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── Layout ─────────────────────────────────── */
+    .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+
+    /* ── Cards ──────────────────────────────────── */
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    /* ── Grid ───────────────────────────────────── */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+    /* ── Stat boxes ─────────────────────────────── */
+    .stat-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-box .label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+    .stat-box .value { font-size: 28px; font-weight: 800; color: #818cf8; }
+    .stat-box .sub { font-size: 11px; color: #475569; margin-top: 2px; }
+
+    /* ── Table ──────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      border-bottom: 1px solid #334155;
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid #1e293b; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1e293b; }
+    .rank { color: #64748b; font-weight: 700; }
+    .player-name { font-weight: 600; color: white; }
+    .team { color: #64748b; font-size: 11px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .badge-cache { background: #14532d; color: #86efac; }
+    .badge-db { background: #1e3a5f; color: #93c5fd; }
+
+    /* ── Search ─────────────────────────────────── */
+    .search-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    input, select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      flex: 1;
+    }
+    input:focus, select:focus { border-color: #4f46e5; }
+    button.btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button.btn:hover { background: #4338ca; }
+    button.btn.secondary {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    button.btn.secondary:hover { background: #475569; }
+    button.btn.danger { background: #dc2626; }
+    button.btn.danger:hover { background: #b91c1c; }
+    button.btn.success { background: #16a34a; }
+    button.btn.success:hover { background: #15803d; }
+
+    /* ── Player profile ─────────────────────────── */
+    .player-profile {
+      display: none;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .player-profile.show { display: block; }
+    .profile-name { font-size: 22px; font-weight: 800; }
+    .profile-team { color: #64748b; font-size: 13px; margin-bottom: 16px; }
+    .profile-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .profile-stat { text-align: center; }
+    .profile-stat .v { font-size: 24px; font-weight: 800; color: #818cf8; }
+    .profile-stat .l { font-size: 11px; color: #64748b; }
+
+    /* ── Event form ─────────────────────────────── */
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .form-row input, .form-row select { flex: 1; min-width: 120px; }
+    .event-log {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      height: 180px;
+      overflow-y: auto;
+      color: #94a3b8;
+    }
+    .log-line { margin-bottom: 4px; }
+    .log-ok { color: #22c55e; }
+    .log-err { color: #ef4444; }
+    .log-info { color: #818cf8; }
+
+    /* ── Health indicators ──────────────────────── */
+    .health-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .health-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .health-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #334155;
+      flex-shrink: 0;
+    }
+    .health-dot.ok { background: #22c55e; }
+    .health-dot.err { background: #ef4444; }
+    .health-label { font-size: 13px; font-weight: 600; }
+    .health-sub { font-size: 11px; color: #64748b; }
+
+    /* ── Source tag ─────────────────────────────── */
+    .source-tag { font-size: 11px; color: #64748b; margin-top: 8px; }
+
+    .empty { text-align: center; color: #475569; padding: 32px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">Sports<span>Pulse</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab" onclick="showTab('fan')">🏀 Fan Stats</button>
+    <button class="nav-tab" onclick="showTab('admin')">⚙️ Admin</button>
+  </div>
+  <div class="live-dot">Live</div>
+</nav>
+
+<!-- ── DASHBOARD ──────────────────────────────────── -->
+<div id="page-dashboard" class="page active">
+  <h2>Live Dashboard</h2>
+  <p class="subtitle">Real-time player stats — refreshes every 5 seconds</p>
+
+  <div class="grid-3" id="summary-cards">
+    <div class="stat-box"><div class="label">Total Events</div><div class="value" id="total-events">—</div><div class="sub">ingested</div></div>
+    <div class="stat-box"><div class="label">Top Scorer</div><div class="value" id="top-scorer" style="font-size:16px;padding-top:6px">—</div><div class="sub" id="top-pts">—</div></div>
+    <div class="stat-box"><div class="label">Cache Source</div><div class="value" id="cache-hit" style="font-size:16px;padding-top:6px">—</div><div class="sub">last query</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏆 Leaderboard — Top Players by Points</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th>Team</th>
+          <th>Points</th>
+          <th>Assists</th>
+          <th>Rebounds</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body">
+        <tr><td colspan="7" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── FAN STATS ──────────────────────────────────── -->
+<div id="page-fan" class="page">
+  <h2>Fan Stats</h2>
+  <p class="subtitle">Search any player to see their performance</p>
+
+  <div class="search-row">
+    <select id="player-select">
+      <option value="">Select a player...</option>
+      <option value="p1">LeBron James</option>
+      <option value="p2">Stephen Curry</option>
+      <option value="p3">Kevin Durant</option>
+      <option value="p4">Giannis A.</option>
+      <option value="p5">Nikola Jokic</option>
+    </select>
+    <button class="btn" onclick="searchPlayer()">Search</button>
+  </div>
+
+  <div class="player-profile" id="player-profile">
+    <div class="profile-name" id="profile-name">—</div>
+    <div class="profile-team" id="profile-team">—</div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="v" id="prof-pts">0</div><div class="l">Points</div></div>
+      <div class="profile-stat"><div class="v" id="prof-ast">0</div><div class="l">Assists</div></div>
+      <div class="profile-stat"><div class="v" id="prof-reb">0</div><div class="l">Rebounds</div></div>
+      <div class="profile-stat"><div class="v" id="prof-gp">0</div><div class="l">Games</div></div>
+    </div>
+    <div class="source-tag" id="prof-source"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">🏆 Full Leaderboard</div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Player</th><th>Team</th><th>Points</th><th>Assists</th><th>Rebounds</th></tr>
+      </thead>
+      <tbody id="fan-leaderboard-body">
+        <tr><td colspan="6" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── ADMIN ──────────────────────────────────────── -->
+<div id="page-admin" class="page">
+  <h2>Admin Panel</h2>
+  <p class="subtitle">Send game events manually and monitor system health</p>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title">🎮 Send Game Event</div>
+        <div class="form-row">
+          <select id="ev-player">
+            <option value="p1">LeBron James (p1)</option>
+            <option value="p2">Stephen Curry (p2)</option>
+            <option value="p3">Kevin Durant (p3)</option>
+            <option value="p4">Giannis A. (p4)</option>
+            <option value="p5">Nikola Jokic (p5)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <select id="ev-type">
+            <option value="shot">Shot (2pts)</option>
+            <option value="shot3">Three-pointer (3pts)</option>
+            <option value="assist">Assist</option>
+            <option value="rebound">Rebound</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <button class="btn success" onclick="sendEvent()">Send Event</button>
+          <button class="btn secondary" onclick="sendBurst()">Send 10 Random</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔌 System Health</div>
+        <div class="health-grid" id="health-grid">
+          <div class="health-item">
+            <div class="health-dot" id="dot-query"></div>
+            <div><div class="health-label">query-svc</div><div class="health-sub">:8081</div></div>
+          </div>
+          <div class="health-item">
+            <div class="health-dot" id="dot-event"></div>
+            <div><div class="health-label">event-svc</div><div class="health-sub">:8080</div></div>
+          </div>
+          <div class="health-item">
+            <div class="health-dot" id="dot-nocache"></div>
+            <div><div class="health-label">query-nocache</div><div class="health-sub">:8082</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Event Log</div>
+      <div class="event-log" id="event-log">
+        <div class="log-line log-info">// Event log ready. Send events to see activity.</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn secondary" style="font-size:12px" onclick="clearLog()">Clear Log</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const EVENT_SVC = 'http://localhost:8080';
+  const QUERY_SVC = 'http://localhost:8081';
+
+  // ── Tab switching ─────────────────────────────────
+  function showTab(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'admin') checkHealth();
+  }
+
+  // ── Leaderboard ───────────────────────────────────
+  async function loadLeaderboard() {
+    try {
+      const res = await fetch(QUERY_SVC + '/leaderboard');
+      const src = res.headers.get('X-Source') || 'db';
+      const data = await res.json();
+
+      const tbody = document.getElementById('leaderboard-body');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No data yet — send some events!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map((p, i) => `
+        <tr>
+          <td class="rank">${i + 1}</td>
+          <td class="player-name">${p.player_name}</td>
+          <td class="team">${p.team_id}</td>
+          <td><strong>${p.points}</strong></td>
+          <td>${p.assists}</td>
+          <td>${p.rebounds}</td>
+          <td><span class="badge badge-${src}">${src}</span></td>
+        </tr>`).join('');
+
+      // update summary cards
+      if (data[0]) {
+        document.getElementById('top-scorer').textContent = data[0].player_name.split(' ')[0];
+        document.getElementById('top-pts').textContent = data[0].points + ' pts';
+      }
+      document.getElementById('cache-hit').textContent = src === 'cache' ? '⚡ Cache' : '🗄 DB';
+
+      // count total events
+      const total = data.reduce((s, p) => s + p.points + p.assists + p.rebounds, 0);
+      document.getElementById('total-events').textContent = total;
+
+      // fan leaderboard
+      const fbody = document.getElementById('fan-leaderboard-body');
+      fbody.innerHTML = data.map((p, i) => `
+        <tr>
+          <td class="rank">${i + 1}</td>
+          <td class="player-name">${p.player_name}</td>
+          <td class="team">${p.team_id}</td>
+          <td><strong>${p.points}</strong></td>
+          <td>${p.assists}</td>
+          <td>${p.rebounds}</td>
+        </tr>`).join('');
+    } catch (e) {
+      document.getElementById('leaderboard-body').innerHTML =
+        '<tr><td colspan="7" class="empty">⚠️ Could not reach query-svc — is it running?</td></tr>';
+    }
+  }
+
+  // ── Fan search ────────────────────────────────────
+  async function searchPlayer() {
+    const id = document.getElementById('player-select').value;
+    if (!id) return;
+    try {
+      const res = await fetch(QUERY_SVC + '/stats?player_id=' + id);
+      const src = res.headers.get('X-Source') || 'db';
+      const p = await res.json();
+      document.getElementById('profile-name').textContent = p.player_name;
+      document.getElementById('profile-team').textContent = p.team_id.toUpperCase();
+      document.getElementById('prof-pts').textContent = p.points;
+      document.getElementById('prof-ast').textContent = p.assists;
+      document.getElementById('prof-reb').textContent = p.rebounds;
+      document.getElementById('prof-gp').textContent = p.games_played;
+      document.getElementById('prof-source').textContent = '📡 Source: ' + src;
+      document.getElementById('player-profile').classList.add('show');
+    } catch (e) {
+      alert('Could not fetch player stats');
+    }
+  }
+
+  // ── Send event ────────────────────────────────────
+  let eventCounter = 0;
+  async function sendEvent(playerOverride, typeOverride) {
+    const player = playerOverride || document.getElementById('ev-player').value;
+    const evType = typeOverride || document.getElementById('ev-type').value;
+
+    const teamMap = { p1:'lakers', p2:'warriors', p3:'suns', p4:'bucks', p5:'nuggets' };
+    const valueMap = { shot: 2, shot3: 3, assist: 1, rebound: 1 };
+    const actualType = evType === 'shot3' ? 'shot' : evType;
+
+    const payload = {
+      event_id: 'ui-' + Date.now() + '-' + (++eventCounter),
+      player_id: player,
+      team_id: teamMap[player],
+      event_type: actualType,
+      value: valueMap[evType],
+    };
+
+    const log = document.getElementById('event-log');
+    try {
+      const res = await fetch(EVENT_SVC + '/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      const playerNames = { p1:'LeBron', p2:'Curry', p3:'Durant', p4:'Giannis', p5:'Jokic' };
+      log.innerHTML += `<div class="log-line log-ok">✓ [${new Date().toLocaleTimeString()}] ${playerNames[player]} — ${evType} (${valueMap[evType]}pts) → ${data.status}</div>`;
+    } catch (e) {
+      log.innerHTML += `<div class="log-line log-err">✗ [${new Date().toLocaleTimeString()}] Failed: ${e.message}</div>`;
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function sendBurst() {
+    const players = ['p1','p2','p3','p4','p5'];
+    const types = ['shot','shot3','assist','rebound'];
+    for (let i = 0; i < 10; i++) {
+      await sendEvent(
+        players[Math.floor(Math.random() * players.length)],
+        types[Math.floor(Math.random() * types.length)]
+      );
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+
+  function clearLog() {
+    document.getElementById('event-log').innerHTML =
+      '<div class="log-line log-info">// Log cleared.</div>';
+  }
+
+  // ── Health checks ─────────────────────────────────
+  async function checkService(url, dotId) {
+    const dot = document.getElementById(dotId);
+    try {
+      const res = await fetch(url + '/health', { signal: AbortSignal.timeout(2000) });
+      dot.className = res.ok ? 'health-dot ok' : 'health-dot err';
+    } catch {
+      dot.className = 'health-dot err';
+    }
+  }
+
+  function checkHealth() {
+    checkService('http://localhost:8081', 'dot-query');
+    checkService('http://localhost:8080', 'dot-event');
+    checkService('http://localhost:8082', 'dot-nocache');
+  }
+
+  // ── Init ──────────────────────────────────────────
+  loadLeaderboard();
+  setInterval(loadLeaderboard, 5000);
+</script>
+</body>
+</html>

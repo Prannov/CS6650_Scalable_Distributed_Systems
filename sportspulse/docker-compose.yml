@@ -1,4 +1,5 @@
 services:
+
   postgres:
     image: postgres:16-alpine
     environment:
@@ -6,9 +7,9 @@ services:
       POSTGRES_USER: sp_user
       POSTGRES_PASSWORD: sp_pass
     ports:
-      - "5434:5432"
+      - "5433:5432"
     volumes:
-      - pg_direct_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
       - ./infra/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sp_user -d sportspulse"]
@@ -16,12 +17,100 @@ services:
       timeout: 5s
       retries: 5
 
-  event-svc:
-    build:
-      context: ./event-svc-direct
-      dockerfile: Dockerfile.direct
+  redis:
+    image: redis:7-alpine
     ports:
-      - "8083:8080"
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic game-events --partitions 3 --replication-factor 1 && echo 'topic game-events ready'"]
+    restart: "no"
+
+  event-svc:
+    build: ./event-svc
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=game-events
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  stats-worker:
+    build: ./stats-worker
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=game-events
+      - KAFKA_GROUP=stats-workers
+      - DB_URL=postgres://sp_user:sp_pass@postgres:5432/sportspulse?sslmode=disable
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  query-svc:
+    build: ./query-svc
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_URL=postgres://sp_user:sp_pass@postgres:5432/sportspulse?sslmode=disable
+      - REDIS_URL=redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  query-svc-nocache:
+    build: ./query-svc-nocache
+    ports:
+      - "8082:8080"
     environment:
       - DB_URL=postgres://sp_user:sp_pass@postgres:5432/sportspulse?sslmode=disable
     depends_on:
@@ -29,4 +118,4 @@ services:
         condition: service_healthy
 
 volumes:
-  pg_direct_data:
+  pg_data:

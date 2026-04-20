@@ -192,6 +192,7 @@ func main() {
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/stats", playerStatsHandler)
 	mux.HandleFunc("/leaderboard", leaderboardHandler)
+	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
 	log.Printf("query-svc starting on :%s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
