@@ -102,7 +102,7 @@ curl http://localhost:8081/leaderboard
 
 ---
 
-## Run Experiments
+## Run Experiments - "CODE!"
 
 ```bash
 pip install locust
