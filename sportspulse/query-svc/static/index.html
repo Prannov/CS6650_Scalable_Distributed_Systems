@@ -1,332 +1,255 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SportsPulse</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SportsPulse — Live Stats</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Anybody', 'sans-serif'],
+        mono: ['Space Mono', 'monospace'],
+      },
+      colors: {
+        surface: { 50: '#f8fafc', 100: '#0b0f1a', 200: '#111729', 300: '#171f35', 400: '#1e2844', 500: '#283555' },
+        flame: { 400: '#fb923c', 500: '#f97316', 600: '#ea580c' },
+        mint: { 400: '#34d399', 500: '#10b981' },
+        ice: { 400: '#818cf8', 500: '#6366f1' },
+      },
+      keyframes: {
+        'fade-up': { '0%': { opacity: 0, transform: 'translateY(24px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+        'slide-right': { '0%': { opacity: 0, transform: 'translateX(-30px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } },
+        'scale-up': { '0%': { opacity: 0, transform: 'scale(0.92)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+        'glow-pulse': { '0%,100%': { boxShadow: '0 0 12px rgba(249,115,22,0.2)' }, '50%': { boxShadow: '0 0 28px rgba(249,115,22,0.4)' } },
+        'ticker': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
+        'live-dot': { '0%,100%': { opacity: 1, transform: 'scale(1)' }, '50%': { opacity: 0.3, transform: 'scale(0.7)' } },
+        'shimmer': { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+      },
+      animation: {
+        'fade-up': 'fade-up 0.5s ease both',
+        'slide-right': 'slide-right 0.4s ease both',
+        'scale-up': 'scale-up 0.4s ease both',
+        'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
+        'ticker': 'ticker 35s linear infinite',
+        'live-dot': 'live-dot 2s ease-in-out infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+      },
+    },
+  },
+}
+</script>
+<style>
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #283555; border-radius: 2px; }
+  .delay-75 { animation-delay: 75ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-250 { animation-delay: 250ms; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      min-height: 100vh;
-    }
+  /* ═══ FLOWING COLOR BAR ═══ */
+  .flow-bar {
+    background: linear-gradient(90deg, #fb923c, #818cf8, #34d399, #fb923c, #818cf8, #34d399, #fb923c);
+    background-size: 300% 100%;
+    animation: flowColor 3s linear infinite;
+  }
+  @keyframes flowColor {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
 
-    /* ── Nav ───────────────────────────────────── */
-    nav {
-      background: #1e293b;
-      border-bottom: 1px solid #334155;
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      height: 56px;
-    }
-    .nav-brand {
-      font-size: 18px;
-      font-weight: 800;
-      color: #818cf8;
-      letter-spacing: -0.5px;
-    }
-    .nav-brand span { color: white; }
-    .nav-tabs { display: flex; gap: 4px; }
-    .nav-tab {
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      color: #94a3b8;
-      transition: all 0.15s;
-    }
-    .nav-tab:hover { background: #334155; color: white; }
-    .nav-tab.active { background: #4f46e5; color: white; }
-    .live-dot {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: #22c55e;
-    }
-    .live-dot::before {
-      content: '';
-      width: 8px; height: 8px;
-      background: #22c55e;
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+  /* ═══ GLITCH LOGO ═══ */
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.7; }
+  .glitch::before { color: #fb923c; z-index: -1; animation: glitch1 4s infinite; }
+  .glitch::after { color: #818cf8; z-index: -2; animation: glitch2 4s infinite; }
+  @keyframes glitch1 { 0%,100% { clip-path: inset(0 0 95% 0); } 5% { clip-path: inset(30% 0 40% 0); transform: translate(-2px); } 10% { clip-path: inset(0 0 95% 0); transform: translate(0); } }
+  @keyframes glitch2 { 0%,100% { clip-path: inset(95% 0 0 0); } 5% { clip-path: inset(50% 0 20% 0); transform: translate(2px); } 10% { clip-path: inset(95% 0 0 0); transform: translate(0); } }
 
-    /* ── Layout ─────────────────────────────────── */
-    .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
-    .page.active { display: block; }
+  /* ═══ NEON BORDER (rotating) ═══ */
+  .neon-border { position: relative; overflow: hidden; }
+  .neon-border::before { content: ''; position: absolute; inset: -2px; background: conic-gradient(from 0deg, #fb923c, #818cf8, #34d399, #fb923c); border-radius: inherit; z-index: -1; animation: rotateBorder 4s linear infinite; }
+  .neon-border::after { content: ''; position: absolute; inset: 2px; background: #0b0f1a; border-radius: inherit; z-index: -1; }
+  @keyframes rotateBorder { to { transform: rotate(360deg); } }
 
-    h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+  /* ═══ PULSE RING ═══ */
+  .pulse-ring { animation: pulseRing 2s ease-in-out infinite; }
+  @keyframes pulseRing { 0%,100% { box-shadow: 0 0 0 0 rgba(249,115,22,0.4); } 50% { box-shadow: 0 0 0 10px rgba(249,115,22,0); } }
 
-    /* ── Cards ──────────────────────────────────── */
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .card-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #64748b;
-      margin-bottom: 12px;
-    }
+  /* ═══ PARTICLES ═══ */
+  #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .particle { position: absolute; border-radius: 50%; animation: float linear infinite; opacity: 0; }
+  @keyframes float { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 10% { opacity: 0.7; } 90% { opacity: 0.7; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
 
-    /* ── Grid ───────────────────────────────────── */
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-
-    /* ── Stat boxes ─────────────────────────────── */
-    .stat-box {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-    }
-    .stat-box .label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
-    .stat-box .value { font-size: 28px; font-weight: 800; color: #818cf8; }
-    .stat-box .sub { font-size: 11px; color: #475569; margin-top: 2px; }
-
-    /* ── Table ──────────────────────────────────── */
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th {
-      text-align: left;
-      padding: 8px 12px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
-      border-bottom: 1px solid #334155;
-    }
-    td { padding: 10px 12px; border-bottom: 1px solid #1e293b; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #1e293b; }
-    .rank { color: #64748b; font-weight: 700; }
-    .player-name { font-weight: 600; color: white; }
-    .team { color: #64748b; font-size: 11px; }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 99px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-    .badge-cache { background: #14532d; color: #86efac; }
-    .badge-db { background: #1e3a5f; color: #93c5fd; }
-
-    /* ── Search ─────────────────────────────────── */
-    .search-row { display: flex; gap: 10px; margin-bottom: 16px; }
-    input, select {
-      background: #0f172a;
-      border: 1px solid #334155;
-      color: #e2e8f0;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      outline: none;
-      flex: 1;
-    }
-    input:focus, select:focus { border-color: #4f46e5; }
-    button.btn {
-      background: #4f46e5;
-      color: white;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    button.btn:hover { background: #4338ca; }
-    button.btn.secondary {
-      background: #334155;
-      color: #e2e8f0;
-    }
-    button.btn.secondary:hover { background: #475569; }
-    button.btn.danger { background: #dc2626; }
-    button.btn.danger:hover { background: #b91c1c; }
-    button.btn.success { background: #16a34a; }
-    button.btn.success:hover { background: #15803d; }
-
-    /* ── Player profile ─────────────────────────── */
-    .player-profile {
-      display: none;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 20px;
-    }
-    .player-profile.show { display: block; }
-    .profile-name { font-size: 22px; font-weight: 800; }
-    .profile-team { color: #64748b; font-size: 13px; margin-bottom: 16px; }
-    .profile-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .profile-stat { text-align: center; }
-    .profile-stat .v { font-size: 24px; font-weight: 800; color: #818cf8; }
-    .profile-stat .l { font-size: 11px; color: #64748b; }
-
-    /* ── Event form ─────────────────────────────── */
-    .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-    .form-row input, .form-row select { flex: 1; min-width: 120px; }
-    .event-log {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 12px;
-      height: 180px;
-      overflow-y: auto;
-      color: #94a3b8;
-    }
-    .log-line { margin-bottom: 4px; }
-    .log-ok { color: #22c55e; }
-    .log-err { color: #ef4444; }
-    .log-info { color: #818cf8; }
-
-    /* ── Health indicators ──────────────────────── */
-    .health-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .health-item {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .health-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #334155;
-      flex-shrink: 0;
-    }
-    .health-dot.ok { background: #22c55e; }
-    .health-dot.err { background: #ef4444; }
-    .health-label { font-size: 13px; font-weight: 600; }
-    .health-sub { font-size: 11px; color: #64748b; }
-
-    /* ── Source tag ─────────────────────────────── */
-    .source-tag { font-size: 11px; color: #64748b; margin-top: 8px; }
-
-    .empty { text-align: center; color: #475569; padding: 32px; font-size: 13px; }
-  </style>
+  .noise::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+  .mesh-bg {
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 10%, rgba(249,115,22,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 85% 80%, rgba(99,102,241,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(16,185,129,0.03) 0%, transparent 50%);
+  }
+  .glass { background: rgba(17,23,41,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(40,53,85,0.6); }
+  .row-hover { transition: all 0.2s; }
+  .row-hover:hover { background: rgba(30,40,68,0.5); transform: translateX(4px); }
+  .stat-hover { transition: all 0.25s; }
+  .stat-hover:hover { border-color: rgba(249,115,22,0.4); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .player-chip { transition: all 0.25s; }
+  .player-chip:hover { border-color: rgba(249,115,22,0.5); color: #fb923c; background: rgba(249,115,22,0.08); }
+  .player-chip.active { border-color: #f97316; color: #f97316; background: rgba(249,115,22,0.12); box-shadow: 0 0 20px rgba(249,115,22,0.2); transform: scale(1.04); }
+  .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0a0a0a; }
+  .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: #0a0a0a; }
+  .rank-3 { background: linear-gradient(135deg, #d97706, #b45309); color: #0a0a0a; }
+  .accent-bar { background: linear-gradient(90deg, transparent, rgba(249,115,22,0.6), transparent); background-size: 200% 100%; animation: shimmer 3s linear infinite; }
+  .badge-redis { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+  .badge-pg { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+  .log-ok { border-left: 3px solid #10b981; }
+  .log-err { border-left: 3px solid #ef4444; }
+</style>
 </head>
-<body>
 
-<nav>
-  <div class="nav-brand">Sports<span>Pulse</span></div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
-    <button class="nav-tab" onclick="showTab('fan')">🏀 Fan Stats</button>
-    <button class="nav-tab" onclick="showTab('admin')">⚙️ Admin</button>
+<body class="noise mesh-bg bg-surface-100 text-slate-200 min-h-screen font-display relative">
+
+<!-- PARTICLES -->
+<div id="particles"></div>
+
+<!-- NAV -->
+<nav class="sticky top-0 z-50 border-b border-surface-500/40" style="background:rgba(11,15,26,0.88);backdrop-filter:blur(24px)">
+  <div class="max-w-[1280px] mx-auto px-6 h-16 flex items-center gap-6">
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-flame-500 text-sm neon-border pulse-ring" style="background:#0b0f1a">SP</div>
+      <span class="font-black text-xl tracking-tight glitch" data-text="SportsPulse">Sports<span class="text-flame-500">Pulse</span></span>
+    </div>
+    <div class="flex gap-1 bg-surface-300/50 rounded-xl p-1" id="navTabs">
+      <button onclick="switchPage('dashboard')" class="nav-tab bg-flame-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">Dashboard</button>
+      <button onclick="switchPage('stats')" class="nav-tab text-slate-400 hover:text-slate-200 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">Fan Stats</button>
+      <button onclick="switchPage('admin')" class="nav-tab text-slate-400 hover:text-slate-200 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">Admin</button>
+    </div>
+    <div class="ml-auto flex items-center gap-2 font-mono text-xs">
+      <span class="w-2 h-2 rounded-full bg-mint-500 animate-live-dot" id="statusDot"></span>
+      <span id="statusLabel" class="text-mint-400 uppercase tracking-widest font-bold">Live</span>
+    </div>
   </div>
-  <div class="live-dot">Live</div>
 </nav>
 
-<!-- ── DASHBOARD ──────────────────────────────────── -->
-<div id="page-dashboard" class="page active">
-  <h2>Live Dashboard</h2>
-  <p class="subtitle">Real-time player stats — refreshes every 5 seconds</p>
-
-  <div class="grid-3" id="summary-cards">
-    <div class="stat-box"><div class="label">Total Events</div><div class="value" id="total-events">—</div><div class="sub">ingested</div></div>
-    <div class="stat-box"><div class="label">Top Scorer</div><div class="value" id="top-scorer" style="font-size:16px;padding-top:6px">—</div><div class="sub" id="top-pts">—</div></div>
-    <div class="stat-box"><div class="label">Cache Source</div><div class="value" id="cache-hit" style="font-size:16px;padding-top:6px">—</div><div class="sub">last query</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🏆 Leaderboard — Top Players by Points</div>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Player</th>
-          <th>Team</th>
-          <th>Points</th>
-          <th>Assists</th>
-          <th>Rebounds</th>
-          <th>Source</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboard-body">
-        <tr><td colspan="7" class="empty">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
+<!-- TICKER -->
+<div class="border-b border-surface-500/30 bg-surface-200/60 overflow-hidden h-8 flex items-center">
+  <div class="flex items-center gap-10 animate-ticker whitespace-nowrap font-mono text-xs text-slate-400" id="ticker"></div>
 </div>
 
-<!-- ── FAN STATS ──────────────────────────────────── -->
-<div id="page-fan" class="page">
-  <h2>Fan Stats</h2>
-  <p class="subtitle">Search any player to see their performance</p>
+<!-- MAIN -->
+<main class="relative z-10 max-w-[1280px] mx-auto px-6 py-8">
 
-  <div class="search-row">
-    <select id="player-select">
-      <option value="">Select a player...</option>
-      <option value="p1">LeBron James</option>
-      <option value="p2">Stephen Curry</option>
-      <option value="p3">Kevin Durant</option>
-      <option value="p4">Giannis A.</option>
-      <option value="p5">Nikola Jokic</option>
-    </select>
-    <button class="btn" onclick="searchPlayer()">Search</button>
-  </div>
-
-  <div class="player-profile" id="player-profile">
-    <div class="profile-name" id="profile-name">—</div>
-    <div class="profile-team" id="profile-team">—</div>
-    <div class="profile-stats">
-      <div class="profile-stat"><div class="v" id="prof-pts">0</div><div class="l">Points</div></div>
-      <div class="profile-stat"><div class="v" id="prof-ast">0</div><div class="l">Assists</div></div>
-      <div class="profile-stat"><div class="v" id="prof-reb">0</div><div class="l">Rebounds</div></div>
-      <div class="profile-stat"><div class="v" id="prof-gp">0</div><div class="l">Games</div></div>
+  <!-- DASHBOARD -->
+  <section id="page-dashboard" class="page">
+    <div class="mb-8 animate-fade-up">
+      <h1 class="text-3xl font-black tracking-tight mb-1">Live Dashboard</h1>
+      <p class="text-slate-500 text-sm font-medium">Real-time player rankings · auto-refresh 5s</p>
     </div>
-    <div class="source-tag" id="prof-source"></div>
-  </div>
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="glass rounded-2xl p-5 text-center stat-hover animate-scale-up">
+        <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Total Events</div>
+        <div class="text-4xl font-black text-flame-500 tracking-tight" id="totalEvents">0</div>
+        <div class="text-[11px] text-slate-600 mt-1">ingested</div>
+      </div>
+      <div class="glass rounded-2xl p-5 text-center stat-hover animate-scale-up delay-75">
+        <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Top Scorer</div>
+        <div class="text-xl font-black tracking-tight" id="topScorer">—</div>
+        <div class="text-[11px] text-slate-600 mt-1" id="topPts">—</div>
+      </div>
+      <div class="glass rounded-2xl p-5 text-center stat-hover animate-scale-up delay-150">
+        <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Data Source</div>
+        <div class="text-xl font-black tracking-tight" id="sourceLabel">—</div>
+        <div class="text-[11px] text-slate-600 mt-1">last query</div>
+      </div>
+    </div>
+    <div class="neon-border rounded-2xl animate-fade-up delay-200">
+      <div class="glass rounded-2xl overflow-hidden" style="border:none">
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-surface-500/40">
+        <span class="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">🏆 Leaderboard</span>
+        <span id="leaderSource"></span>
+      </div>
+      <div class="h-[2px] accent-bar"></div>
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-surface-500/30">
+            <th class="py-3 px-5 text-left font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600 w-12">#</th>
+            <th class="py-3 px-4 text-left font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">Player</th>
+            <th class="py-3 px-4 text-left font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">Team</th>
+            <th class="py-3 px-4 text-right font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">PTS</th>
+            <th class="py-3 px-4 text-right font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">AST</th>
+            <th class="py-3 px-4 text-right font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">REB</th>
+          </tr>
+        </thead>
+        <tbody id="leaderBody">
+          <tr><td colspan="6" class="py-12 text-center text-slate-600 text-sm">Loading...</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </section>
 
-  <div class="card" style="margin-top:16px">
-    <div class="card-title">🏆 Full Leaderboard</div>
-    <table>
-      <thead>
-        <tr><th>#</th><th>Player</th><th>Team</th><th>Points</th><th>Assists</th><th>Rebounds</th></tr>
-      </thead>
-      <tbody id="fan-leaderboard-body">
-        <tr><td colspan="6" class="empty">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+  <!-- FAN STATS -->
+  <section id="page-stats" class="page hidden">
+    <div class="mb-8 animate-fade-up">
+      <h1 class="text-3xl font-black tracking-tight mb-1">Player Stats</h1>
+      <p class="text-slate-500 text-sm font-medium">Select a player to view their performance</p>
+    </div>
+    <div class="flex flex-wrap gap-3 mb-8" id="playerChips"></div>
+    <div id="playerCard" class="hidden">
+      <div class="glass rounded-2xl p-7 relative overflow-hidden animate-scale-up">
+        <div class="absolute top-0 left-0 right-0 h-1 flow-bar" id="playerAccent"></div>
+        <div class="flex items-start justify-between mb-6 flex-wrap gap-3">
+          <div>
+            <div class="text-2xl font-black tracking-tight" id="cardName">—</div>
+            <div class="font-mono text-xs text-slate-500 uppercase tracking-[0.1em] mt-1" id="cardTeam">—</div>
+          </div>
+          <span id="cardSource"></span>
+        </div>
+        <div class="grid grid-cols-4 gap-4">
+          <div class="bg-surface-100/80 border border-surface-500/40 rounded-xl p-5 text-center stat-hover animate-fade-up">
+            <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">Points</div>
+            <div class="text-3xl font-black text-flame-500 tracking-tight" id="cardPts">0</div>
+          </div>
+          <div class="bg-surface-100/80 border border-surface-500/40 rounded-xl p-5 text-center stat-hover animate-fade-up delay-75">
+            <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">Assists</div>
+            <div class="text-3xl font-black tracking-tight" id="cardAst">0</div>
+          </div>
+          <div class="bg-surface-100/80 border border-surface-500/40 rounded-xl p-5 text-center stat-hover animate-fade-up delay-150">
+            <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">Rebounds</div>
+            <div class="text-3xl font-black tracking-tight" id="cardReb">0</div>
+          </div>
+          <div class="bg-surface-100/80 border border-surface-500/40 rounded-xl p-5 text-center stat-hover animate-fade-up delay-200">
+            <div class="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">Games</div>
+            <div class="text-3xl font-black tracking-tight" id="cardGP">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="playerEmpty" class="glass rounded-2xl py-16 text-center text-slate-600 text-sm">Select a player above to view their stats</div>
+  </section>
 
-<!-- ── ADMIN ──────────────────────────────────────── -->
-<div id="page-admin" class="page">
-  <h2>Admin Panel</h2>
-  <p class="subtitle">Send game events manually and monitor system health</p>
-
-  <div class="grid-2">
-    <div>
-      <div class="card">
-        <div class="card-title">🎮 Send Game Event</div>
-        <div class="form-row">
-          <select id="ev-player">
+  <!-- ADMIN -->
+  <section id="page-admin" class="page hidden">
+    <div class="mb-8 animate-fade-up">
+      <h1 class="text-3xl font-black tracking-tight mb-1">Admin Panel</h1>
+      <p class="text-slate-500 text-sm font-medium">Send game events and monitor system activity</p>
+    </div>
+    <div class="grid grid-cols-2 gap-5">
+      <div class="glass rounded-2xl p-6 animate-scale-up">
+        <div class="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-5">📡 Send Event</div>
+        <div class="mb-4">
+          <label class="block font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 mb-1.5">Player</label>
+          <select id="evPlayer" class="w-full px-3 py-2.5 rounded-lg bg-surface-100 border border-surface-500/50 text-slate-200 font-display text-sm font-medium focus:border-flame-500 focus:ring-1 focus:ring-flame-500/30 outline-none transition cursor-pointer">
             <option value="p1">LeBron James (p1)</option>
             <option value="p2">Stephen Curry (p2)</option>
             <option value="p3">Kevin Durant (p3)</option>
@@ -334,208 +257,215 @@
             <option value="p5">Nikola Jokic (p5)</option>
           </select>
         </div>
-        <div class="form-row">
-          <select id="ev-type">
+        <div class="mb-5">
+          <label class="block font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 mb-1.5">Event Type</label>
+          <select id="evType" class="w-full px-3 py-2.5 rounded-lg bg-surface-100 border border-surface-500/50 text-slate-200 font-display text-sm font-medium focus:border-flame-500 focus:ring-1 focus:ring-flame-500/30 outline-none transition cursor-pointer">
             <option value="shot">Shot (2pts)</option>
             <option value="shot3">Three-pointer (3pts)</option>
-            <option value="assist">Assist</option>
-            <option value="rebound">Rebound</option>
+            <option value="assist">Assist (1pt)</option>
+            <option value="rebound">Rebound (1pt)</option>
           </select>
         </div>
-        <div class="form-row">
-          <button class="btn success" onclick="sendEvent()">Send Event</button>
-          <button class="btn secondary" onclick="sendBurst()">Send 10 Random</button>
+        <div class="flex gap-3">
+          <button onclick="sendEvent()" class="flex-1 py-2.5 rounded-lg bg-mint-500 hover:bg-mint-400 text-white font-bold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0">Send Event</button>
+          <button onclick="sendBurst()" id="burstBtn" class="flex-1 py-2.5 rounded-lg bg-surface-400 hover:bg-surface-500 text-slate-300 font-semibold text-sm border border-surface-500/50 transition-all hover:-translate-y-0.5">Burst ×10</button>
+        </div>
+        <div class="mt-6">
+          <div class="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 mb-3">System Health</div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-surface-100/80 border border-surface-500/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-600" id="dotQuery"></span>
+              <div><div class="text-xs font-bold">query-svc</div><div class="text-[10px] text-slate-600 font-mono">:8081</div></div>
+            </div>
+            <div class="bg-surface-100/80 border border-surface-500/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-600" id="dotEvent"></span>
+              <div><div class="text-xs font-bold">event-svc</div><div class="text-[10px] text-slate-600 font-mono">:8080</div></div>
+            </div>
+            <div class="bg-surface-100/80 border border-surface-500/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-600" id="dotNocache"></span>
+              <div><div class="text-xs font-bold">no-cache</div><div class="text-[10px] text-slate-600 font-mono">:8082</div></div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-title">🔌 System Health</div>
-        <div class="health-grid" id="health-grid">
-          <div class="health-item">
-            <div class="health-dot" id="dot-query"></div>
-            <div><div class="health-label">query-svc</div><div class="health-sub">:8081</div></div>
-          </div>
-          <div class="health-item">
-            <div class="health-dot" id="dot-event"></div>
-            <div><div class="health-label">event-svc</div><div class="health-sub">:8080</div></div>
-          </div>
-          <div class="health-item">
-            <div class="health-dot" id="dot-nocache"></div>
-            <div><div class="health-label">query-nocache</div><div class="health-sub">:8082</div></div>
-          </div>
+      <div class="glass rounded-2xl p-6 flex flex-col animate-scale-up delay-75">
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">📋 Event Log</span>
+          <button onclick="clearLog()" class="px-3 py-1 rounded-md border border-surface-500/50 text-slate-500 font-mono text-[10px] font-bold uppercase tracking-wider hover:text-slate-300 hover:border-surface-400 transition">Clear</button>
+        </div>
+        <div id="eventLog" class="flex-1 min-h-[260px] max-h-[380px] overflow-y-auto bg-surface-100/60 border border-surface-500/30 rounded-xl p-4 font-mono text-xs space-y-1.5">
+          <div class="text-slate-600 text-center py-6">Send events to see activity...</div>
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-title">📋 Event Log</div>
-      <div class="event-log" id="event-log">
-        <div class="log-line log-info">// Event log ready. Send events to see activity.</div>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn secondary" style="font-size:12px" onclick="clearLog()">Clear Log</button>
-      </div>
-    </div>
-  </div>
-</div>
+  </section>
+</main>
 
 <script>
-  const EVENT_SVC = 'http://localhost:8080';
-  const QUERY_SVC = 'http://localhost:8081';
+const EVENT_SVC='http://localhost:8080', QUERY_SVC='http://localhost:8081';
+const PLAYERS={p1:{name:'LeBron James',team:'Lakers',abbr:'LAL',color:'#552583'},p2:{name:'Stephen Curry',team:'Warriors',abbr:'GSW',color:'#1D428A'},p3:{name:'Kevin Durant',team:'Suns',abbr:'PHX',color:'#E56020'},p4:{name:'Giannis A.',team:'Bucks',abbr:'MIL',color:'#00471B'},p5:{name:'Nikola Jokic',team:'Nuggets',abbr:'DEN',color:'#0E2240'}};
+let currentPage='dashboard',selectedPlayer=null,refreshTimer=null;
 
-  // ── Tab switching ─────────────────────────────────
-  function showTab(name) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('page-' + name).classList.add('active');
-    event.target.classList.add('active');
-    if (name === 'admin') checkHealth();
+function switchPage(p){
+  currentPage=p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('page-'+p).classList.remove('hidden');
+  document.querySelectorAll('.nav-tab').forEach(t=>{t.className='nav-tab text-slate-400 hover:text-slate-200 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all'});
+  const idx=p==='dashboard'?0:p==='stats'?1:2;
+  const tab=document.querySelectorAll('.nav-tab')[idx];
+  tab.className='nav-tab bg-flame-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-all';
+  if(p==='dashboard')startRefresh();
+  if(p==='admin')checkHealth();
+}
+
+function makeBadge(s){
+  if(!s)return'';
+  const c=s.toLowerCase().includes('cache')||s.toLowerCase().includes('redis');
+  return`<span class="${c?'badge-redis':'badge-pg'} inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>${c?'Redis':'Postgres'}</span>`;
+}
+
+function animateCount(el,target,dur=500){
+  const start=parseInt(el.textContent)||0;
+  if(start===target)return;
+  const t0=performance.now();
+  function tick(now){
+    const p=Math.min((now-t0)/dur,1);
+    el.textContent=Math.round(start+(target-start)*(1-Math.pow(1-p,3)));
+    if(p<1)requestAnimationFrame(tick);
   }
+  requestAnimationFrame(tick);
+}
 
-  // ── Leaderboard ───────────────────────────────────
-  async function loadLeaderboard() {
-    try {
-      const res = await fetch(QUERY_SVC + '/leaderboard');
-      const src = res.headers.get('X-Source') || 'db';
-      const data = await res.json();
+async function fetchLeaderboard(){
+  try{
+    const r=await fetch(QUERY_SVC+'/leaderboard',{signal:AbortSignal.timeout(4000)});
+    const src=r.headers.get('X-Source');
+    const data=await r.json();
+    if(!Array.isArray(data))return;
+    data.sort((a,b)=>(b.points||0)-(a.points||0));
 
-      const tbody = document.getElementById('leaderboard-body');
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">No data yet — send some events!</td></tr>';
-        return;
-      }
+    document.getElementById('statusDot').className='w-2 h-2 rounded-full bg-mint-500 animate-live-dot';
+    document.getElementById('statusLabel').textContent='Live';
+    document.getElementById('statusLabel').className='text-mint-400 uppercase tracking-widest font-bold';
+    document.getElementById('leaderSource').innerHTML=makeBadge(src);
 
-      tbody.innerHTML = data.map((p, i) => `
-        <tr>
-          <td class="rank">${i + 1}</td>
-          <td class="player-name">${p.player_name}</td>
-          <td class="team">${p.team_id}</td>
-          <td><strong>${p.points}</strong></td>
-          <td>${p.assists}</td>
-          <td>${p.rebounds}</td>
-          <td><span class="badge badge-${src}">${src}</span></td>
-        </tr>`).join('');
+    const isC=src&&(src.toLowerCase().includes('cache')||src.toLowerCase().includes('redis'));
+    document.getElementById('sourceLabel').innerHTML=isC?'<span class="text-mint-400">⚡ Redis</span>':'<span class="text-ice-400">🗄 Postgres</span>';
 
-      // update summary cards
-      if (data[0]) {
-        document.getElementById('top-scorer').textContent = data[0].player_name.split(' ')[0];
-        document.getElementById('top-pts').textContent = data[0].points + ' pts';
-      }
-      document.getElementById('cache-hit').textContent = src === 'cache' ? '⚡ Cache' : '🗄 DB';
-
-      // count total events
-      const total = data.reduce((s, p) => s + p.points + p.assists + p.rebounds, 0);
-      document.getElementById('total-events').textContent = total;
-
-      // fan leaderboard
-      const fbody = document.getElementById('fan-leaderboard-body');
-      fbody.innerHTML = data.map((p, i) => `
-        <tr>
-          <td class="rank">${i + 1}</td>
-          <td class="player-name">${p.player_name}</td>
-          <td class="team">${p.team_id}</td>
-          <td><strong>${p.points}</strong></td>
-          <td>${p.assists}</td>
-          <td>${p.rebounds}</td>
-        </tr>`).join('');
-    } catch (e) {
-      document.getElementById('leaderboard-body').innerHTML =
-        '<tr><td colspan="7" class="empty">⚠️ Could not reach query-svc — is it running?</td></tr>';
+    const total=data.reduce((s,p)=>s+(p.points||0)+(p.assists||0)+(p.rebounds||0),0);
+    animateCount(document.getElementById('totalEvents'),total);
+    if(data[0]){
+      document.getElementById('topScorer').textContent=(data[0].player_name||PLAYERS[data[0].player_id]?.name||'—').split(' ')[0];
+      document.getElementById('topPts').textContent=data[0].points+' pts';
     }
+
+    // Ticker
+    const items=data.map(p=>{
+      const n=p.player_name||PLAYERS[p.player_id]?.name||p.player_id;
+      return`<span class="inline-flex items-center gap-2"><span class="text-flame-500 font-bold">●</span><span class="text-slate-200 font-bold">${n}</span><span>${p.points} PTS</span><span class="text-slate-600">|</span><span>${p.assists} AST</span><span class="text-slate-600">|</span><span>${p.rebounds} REB</span></span>`;
+    }).join('');
+    document.getElementById('ticker').innerHTML=items+items;
+
+    const tbody=document.getElementById('leaderBody');
+    if(!data.length){tbody.innerHTML='<tr><td colspan="6" class="py-12 text-center text-slate-600 text-sm">No data — send events!</td></tr>';return;}
+    tbody.innerHTML=data.map((p,i)=>{
+      const name=p.player_name||PLAYERS[p.player_id]?.name||p.player_id;
+      const abbr=PLAYERS[p.player_id]?.abbr||p.team_id||'—';
+      const rc=i<3?`rank-${i+1}`:'bg-surface-400/50 text-slate-500';
+      return`<tr class="row-hover border-b border-surface-500/20" style="animation:slide-right 0.35s ease ${i*0.06}s both">
+        <td class="py-3 px-5"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black ${rc}">${i+1}</span></td>
+        <td class="py-3 px-4 font-bold tracking-tight">${name}</td>
+        <td class="py-3 px-4 font-mono text-[11px] text-slate-500 uppercase tracking-wider">${abbr}</td>
+        <td class="py-3 px-4 text-right font-mono font-bold text-flame-400 text-lg">${p.points||0}</td>
+        <td class="py-3 px-4 text-right font-mono text-slate-400">${p.assists||0}</td>
+        <td class="py-3 px-4 text-right font-mono text-slate-400">${p.rebounds||0}</td></tr>`;
+    }).join('');
+  }catch{
+    document.getElementById('statusDot').className='w-2 h-2 rounded-full bg-red-500';
+    document.getElementById('statusLabel').textContent='Offline';
+    document.getElementById('statusLabel').className='text-red-400 uppercase tracking-widest font-bold';
   }
+}
 
-  // ── Fan search ────────────────────────────────────
-  async function searchPlayer() {
-    const id = document.getElementById('player-select').value;
-    if (!id) return;
-    try {
-      const res = await fetch(QUERY_SVC + '/stats?player_id=' + id);
-      const src = res.headers.get('X-Source') || 'db';
-      const p = await res.json();
-      document.getElementById('profile-name').textContent = p.player_name;
-      document.getElementById('profile-team').textContent = p.team_id.toUpperCase();
-      document.getElementById('prof-pts').textContent = p.points;
-      document.getElementById('prof-ast').textContent = p.assists;
-      document.getElementById('prof-reb').textContent = p.rebounds;
-      document.getElementById('prof-gp').textContent = p.games_played;
-      document.getElementById('prof-source').textContent = '📡 Source: ' + src;
-      document.getElementById('player-profile').classList.add('show');
-    } catch (e) {
-      alert('Could not fetch player stats');
-    }
+function startRefresh(){if(refreshTimer)clearInterval(refreshTimer);fetchLeaderboard();refreshTimer=setInterval(fetchLeaderboard,5000);}
+
+function initPlayerChips(){
+  document.getElementById('playerChips').innerHTML=Object.entries(PLAYERS).map(([id,p],i)=>
+    `<button class="player-chip px-5 py-2.5 rounded-xl border border-surface-500/50 bg-surface-300/50 text-slate-400 font-bold text-sm cursor-pointer" data-id="${id}" onclick="selectPlayer('${id}')" style="animation:scale-up 0.35s ease ${i*0.06}s both">${p.name}</button>`
+  ).join('');
+}
+
+async function selectPlayer(id){
+  selectedPlayer=id;
+  document.querySelectorAll('.player-chip').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  document.getElementById('playerEmpty').classList.add('hidden');
+  document.getElementById('playerCard').classList.remove('hidden');
+  try{
+    const r=await fetch(QUERY_SVC+'/stats?player_id='+id,{signal:AbortSignal.timeout(4000)});
+    const src=r.headers.get('X-Source');
+    const d=await r.json();
+    document.getElementById('cardName').textContent=d.player_name||PLAYERS[id]?.name;
+    document.getElementById('cardTeam').textContent=`${PLAYERS[id]?.team} · ${PLAYERS[id]?.abbr}`;
+    document.getElementById('cardSource').innerHTML=makeBadge(src);
+    animateCount(document.getElementById('cardPts'),d.points||0);
+    animateCount(document.getElementById('cardAst'),d.assists||0);
+    animateCount(document.getElementById('cardReb'),d.rebounds||0);
+    animateCount(document.getElementById('cardGP'),d.games_played||d.games||0);
+    document.getElementById('playerAccent').style.background=`linear-gradient(90deg,${PLAYERS[id]?.color||'#f97316'},#f97316,${PLAYERS[id]?.color||'#f97316'})`;
+  }catch{document.getElementById('cardName').textContent='Error loading';}
+}
+
+let evCnt=0;
+async function sendEvent(po,to){
+  const pid=po||document.getElementById('evPlayer').value;
+  const type=to||document.getElementById('evType').value;
+  const tm={p1:'lakers',p2:'warriors',p3:'suns',p4:'bucks',p5:'nuggets'};
+  const vm={shot:2,shot3:3,assist:1,rebound:1};
+  const payload={event_id:'ui-'+Date.now()+'-'+(++evCnt),player_id:pid,team_id:tm[pid],event_type:type==='shot3'?'shot':type,value:vm[type]};
+  const log=document.getElementById('eventLog');
+  const time=new Date().toLocaleTimeString();
+  try{
+    const r=await fetch(EVENT_SVC+'/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(log.querySelector('.text-center'))log.innerHTML='';
+    log.insertAdjacentHTML('afterbegin',`<div class="log-ok bg-surface-200/60 rounded-lg px-3 py-2 animate-fade-up"><span class="text-slate-600">[${time}]</span> <span class="text-mint-400">✓</span> <span class="text-slate-200 font-bold">${PLAYERS[pid]?.name?.split(' ')[0]}</span> — ${type} (${vm[type]}pts) <span class="text-slate-600">→ ${d.status}</span></div>`);
+  }catch(e){
+    if(log.querySelector('.text-center'))log.innerHTML='';
+    log.insertAdjacentHTML('afterbegin',`<div class="log-err bg-surface-200/60 rounded-lg px-3 py-2 animate-fade-up"><span class="text-slate-600">[${time}]</span> <span class="text-red-400">✗</span> <span class="text-slate-200 font-bold">${PLAYERS[pid]?.name?.split(' ')[0]}</span> — ${type} <span class="text-red-400">→ ${e.message}</span></div>`);
   }
+}
 
-  // ── Send event ────────────────────────────────────
-  let eventCounter = 0;
-  async function sendEvent(playerOverride, typeOverride) {
-    const player = playerOverride || document.getElementById('ev-player').value;
-    const evType = typeOverride || document.getElementById('ev-type').value;
+async function sendBurst(){
+  const btn=document.getElementById('burstBtn');btn.disabled=true;btn.textContent='Sending...';btn.style.opacity=0.5;
+  const ps=['p1','p2','p3','p4','p5'],ts=['shot','shot3','assist','rebound'];
+  for(let i=0;i<10;i++){await sendEvent(ps[Math.floor(Math.random()*ps.length)],ts[Math.floor(Math.random()*ts.length)]);await new Promise(r=>setTimeout(r,80));}
+  btn.disabled=false;btn.textContent='Burst ×10';btn.style.opacity=1;
+}
 
-    const teamMap = { p1:'lakers', p2:'warriors', p3:'suns', p4:'bucks', p5:'nuggets' };
-    const valueMap = { shot: 2, shot3: 3, assist: 1, rebound: 1 };
-    const actualType = evType === 'shot3' ? 'shot' : evType;
+function clearLog(){document.getElementById('eventLog').innerHTML='<div class="text-slate-600 text-center py-6">Send events to see activity...</div>';}
 
-    const payload = {
-      event_id: 'ui-' + Date.now() + '-' + (++eventCounter),
-      player_id: player,
-      team_id: teamMap[player],
-      event_type: actualType,
-      value: valueMap[evType],
-    };
+async function checkService(url,id){
+  const d=document.getElementById(id);
+  try{const r=await fetch(url+'/health',{signal:AbortSignal.timeout(2000)});d.className=r.ok?'w-2.5 h-2.5 rounded-full bg-mint-500 shadow-lg shadow-mint-500/30':'w-2.5 h-2.5 rounded-full bg-red-500';}
+  catch{d.className='w-2.5 h-2.5 rounded-full bg-red-500';}
+}
+function checkHealth(){checkService('http://localhost:8081','dotQuery');checkService('http://localhost:8080','dotEvent');checkService('http://localhost:8082','dotNocache');}
 
-    const log = document.getElementById('event-log');
-    try {
-      const res = await fetch(EVENT_SVC + '/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      const playerNames = { p1:'LeBron', p2:'Curry', p3:'Durant', p4:'Giannis', p5:'Jokic' };
-      log.innerHTML += `<div class="log-line log-ok">✓ [${new Date().toLocaleTimeString()}] ${playerNames[player]} — ${evType} (${valueMap[evType]}pts) → ${data.status}</div>`;
-    } catch (e) {
-      log.innerHTML += `<div class="log-line log-err">✗ [${new Date().toLocaleTimeString()}] Failed: ${e.message}</div>`;
-    }
-    log.scrollTop = log.scrollHeight;
+// ═══ PARTICLES ═══
+function spawnParticles(){
+  const c=document.getElementById('particles');
+  for(let i=0;i<35;i++){
+    const p=document.createElement('div');p.className='particle';
+    const s=Math.random()*2.5+0.8;
+    const colors=['#fb923c','#818cf8','#34d399','rgba(249,115,22,0.5)'];
+    Object.assign(p.style,{width:s+'px',height:s+'px',left:Math.random()*100+'%',background:colors[Math.floor(Math.random()*colors.length)],animationDuration:(Math.random()*15+12)+'s',animationDelay:(Math.random()*10)+'s',boxShadow:`0 0 ${s*3}px currentColor`});
+    c.appendChild(p);
   }
+}
+spawnParticles();
 
-  async function sendBurst() {
-    const players = ['p1','p2','p3','p4','p5'];
-    const types = ['shot','shot3','assist','rebound'];
-    for (let i = 0; i < 10; i++) {
-      await sendEvent(
-        players[Math.floor(Math.random() * players.length)],
-        types[Math.floor(Math.random() * types.length)]
-      );
-      await new Promise(r => setTimeout(r, 100));
-    }
-  }
-
-  function clearLog() {
-    document.getElementById('event-log').innerHTML =
-      '<div class="log-line log-info">// Log cleared.</div>';
-  }
-
-  // ── Health checks ─────────────────────────────────
-  async function checkService(url, dotId) {
-    const dot = document.getElementById(dotId);
-    try {
-      const res = await fetch(url + '/health', { signal: AbortSignal.timeout(2000) });
-      dot.className = res.ok ? 'health-dot ok' : 'health-dot err';
-    } catch {
-      dot.className = 'health-dot err';
-    }
-  }
-
-  function checkHealth() {
-    checkService('http://localhost:8081', 'dot-query');
-    checkService('http://localhost:8080', 'dot-event');
-    checkService('http://localhost:8082', 'dot-nocache');
-  }
-
-  // ── Init ──────────────────────────────────────────
-  loadLeaderboard();
-  setInterval(loadLeaderboard, 5000);
+initPlayerChips();
+startRefresh();
 </script>
 </body>
 </html>
