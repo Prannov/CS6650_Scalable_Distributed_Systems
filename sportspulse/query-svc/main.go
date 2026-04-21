@@ -53,8 +53,12 @@ func initDB() error {
 
 func initRedis() error {
 	rdb = redis.NewClient(&redis.Options{Addr: redisURL})
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		return fmt.Errorf("redis ping: %w", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Printf("redis unavailable (%v) — running without cache", err)
+		rdb = nil
+		return nil // don't fatal — just run without cache
 	}
 	log.Println("redis connected")
 	return nil
@@ -96,14 +100,16 @@ func playerStatsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cacheKey := "player:" + playerID
 
-	// 1. Try Redis cache first
-	cached, err := rdb.Get(ctx, cacheKey).Result()
-	if err == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Source", "cache")
-		w.Write([]byte(cached))
-		log.Printf("cache HIT: player_id=%s", playerID)
-		return
+	// 1. Try Redis cache first (if available)
+	if rdb != nil {
+		cached, err := rdb.Get(ctx, cacheKey).Result()
+		if err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Source", "cache")
+			w.Write([]byte(cached))
+			log.Printf("cache HIT: player_id=%s", playerID)
+			return
+		}
 	}
 
 	// 2. Cache miss — fetch from Postgres
@@ -118,9 +124,12 @@ func playerStatsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Store in Redis for next request
 	payload, _ := json.Marshal(ps)
-	rdb.Set(ctx, cacheKey, payload, cacheTTL)
+
+	// 3. Store in Redis for next request (if available)
+	if rdb != nil {
+		rdb.Set(ctx, cacheKey, payload, cacheTTL)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Source", "db")
@@ -131,13 +140,15 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cacheKey := "leaderboard:points"
 
-	// Try cache first
-	cached, err := rdb.Get(ctx, cacheKey).Result()
-	if err == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Source", "cache")
-		w.Write([]byte(cached))
-		return
+	// Try cache first (if available)
+	if rdb != nil {
+		cached, err := rdb.Get(ctx, cacheKey).Result()
+		if err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Source", "cache")
+			w.Write([]byte(cached))
+			return
+		}
 	}
 
 	// Fetch top 10 by points from Postgres
@@ -165,7 +176,9 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload, _ := json.Marshal(results)
-	rdb.Set(ctx, cacheKey, payload, cacheTTL)
+	if rdb != nil {
+		rdb.Set(ctx, cacheKey, payload, cacheTTL)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Source", "db")
@@ -186,7 +199,9 @@ func main() {
 	if err := initRedis(); err != nil {
 		log.Fatalf("redis init failed: %v", err)
 	}
-	defer rdb.Close()
+	if rdb != nil {
+		defer rdb.Close()
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
